@@ -6,12 +6,48 @@ from textual.timer import Timer
 
 class BlueLineMapTab(Static):
     refresh_timer: Timer | None = None
+    # Marker styles for easy customization
+    MARKER_STYLES = {
+        "│": "[blue]│[/]",
+        "■": "[yellow]■[/]",
+        "▲": "[cyan]▲[/]",
+        "▼": "[magenta]▼[/]",
+    }
+    marker_col = 30  # Center marker (1-based)
+    label_width = marker_col - 4
+    width = 60
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.vehicle_lat_cache = {}  # {vehicle_id: [prev_lat, curr_lat]}
         self.vehicle_direction_cache = {}  # {vehicle_id: direction: 'stationary'|'northbound'|'southbound'}
         self.last_refresh_time = None
+
+    def render_map_line(self, stop, marker, is_train):
+        import re
+        def strip_markup(s):
+            return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
+        marker_colored = self.MARKER_STYLES.get(marker, marker)
+        label = f"[b]{stop}[/]"
+        label_bg = "[black on bright_white]"
+        label_fmt = f"{label_bg}{label}[/]"
+        if is_train:
+            label_fmt = f"[reverse]{label_fmt}[/]"
+        plain_label = strip_markup(stop)
+        left = ' ' * (self.marker_col - 1)
+        right = f"   {plain_label}"
+        plain_line = f"{left}{marker}{right}"
+        line = plain_line.replace(marker, marker_colored, 1)
+        line = line.replace(plain_label, label_fmt, 1)
+        return line
+
+    def render_legend(self):
+        return (
+            f"[b]{self.MARKER_STYLES['■']}[/b]: Stationary  "
+            f"[b]{self.MARKER_STYLES['▲']}[/b]: Northbound  "
+            f"[b]{self.MARKER_STYLES['▼']}[/b]: Southbound  "
+            f"[b]{self.MARKER_STYLES['│']}[/b]: Track"
+        )
 
     def on_mount(self):
         # Start periodic refresh every 5 seconds
@@ -116,51 +152,15 @@ class BlueLineMapTab(Static):
             return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
 
         lines = []
-        width = 60
-        marker_col = 30  # Center marker (1-based)
-        label_width = marker_col - 4
         # Last refreshed info
         lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
         # Map body (no box, no spacing)
         for idx, (stop, is_train) in enumerate(line_map):
             marker = stop_markers[idx] if is_train else "│"
-            # Colorful markers
-            if marker == "│":
-                marker_colored = "[blue]│[/]"
-            elif marker == "■":
-                marker_colored = "[yellow]■[/]"
-            elif marker == "▲":
-                marker_colored = "[cyan]▲[/]"
-            elif marker == "▼":
-                marker_colored = "[magenta]▼[/]"
-            else:
-                marker_colored = marker
-            label = f"[b]{stop}[/]"
-            label_bg = "[black on bright_white]"
-            label_fmt = f"{label_bg}{label}[/]"
-            if is_train:
-                label_fmt = f"[reverse]{label_fmt}[/]"
-            # Compose plain line for alignment: marker always left, label always right
-            plain_label = strip_markup(stop)
-            left = ' ' * (marker_col - 1)
-            right = f"   {plain_label}"
-            plain_line = f"{left}{marker}{right}"
-            # Now apply markup
-            line = plain_line.replace(marker, marker_colored, 1)
-            line = line.replace(plain_label, label_fmt, 1)
-            lines.append(line)
+            lines.append(self.render_map_line(stop, marker, is_train))
         # Legend
-        legend = (
-            "[b][yellow]■[/]: Stationary  "
-            "[cyan]▲[/]: Northbound  "
-            "[magenta]▼[/]: Southbound  "
-            "[blue]│[/]: Track[/b]"
-        )
         lines.append("")
-        lines.append(legend)
-        self.update("\n".join(lines))
-
-
+        lines.append(self.render_legend())
         self.update("\n".join(lines))
 
 
