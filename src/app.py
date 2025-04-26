@@ -2,6 +2,7 @@ from datetime import datetime
 
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
+from textual.widgets._toast import ToastRack
 from textual.containers import Container
 
 from src.status_bar import StatusBar
@@ -23,6 +24,7 @@ class TransitApp(App):
 
     def action_refresh(self):
         self.refresh_alerts()
+        self.notify("Data refreshed!", severity="information", timeout=3)
 
     def update_status_bar(self, dt):
         bar = self.query_one("#status_bar", StatusBar)
@@ -56,6 +58,7 @@ class TransitApp(App):
                     yield TabPane(
                         "Combined Map", self._combined_map_tab(), id="combined_map_tab"
                     )
+        yield ToastRack()
         yield Footer()
 
     def _alerts_tab(self):
