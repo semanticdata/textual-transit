@@ -3,6 +3,7 @@ from textual.widgets import Header, Footer, Static, DataTable, TabbedContent, Ta
 from textual.containers import Container
 from src.blue_line_map_tab import BlueLineMapTab
 from src.green_line_map_tab import GreenLineMapTab
+from src.combined_map_tab import CombinedMapTab
 from metro_api import MetroTransitAPI, fetch_service_alerts
 
 class BaseTable(DataTable):
@@ -79,6 +80,14 @@ class TransitApp(App):
     ]
 
     def compose(self) -> ComposeResult:
+        # Add CombinedMapTab as a new sub tab in Live Maps
+        # (This is a demonstration; existing tabs are untouched)
+        # yield TabbedContent(
+        #     TabPane(BlueLineMapTab(), title="Blue Line Map"),
+        #     TabPane(GreenLineMapTab(), title="Green Line Map"),
+        #     TabPane(CombinedMapTab(), title="Combined Map"),
+        #     id="live_maps_tab"
+        # )
         yield Header(show_clock=True)
         with TabbedContent():
             yield TabPane("Service Alerts", self._alerts_tab(), id="alerts_tab")
@@ -89,6 +98,8 @@ class TransitApp(App):
                 with TabbedContent():
                     yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
                     yield TabPane("Green Line Map", self._green_line_map_tab(), id="green_line_map_tab")
+                    yield TabPane("Combined Map", self._combined_map_tab(), id="combined_map_tab")
+                    
         yield Footer()
 
     def _alerts_tab(self):
@@ -130,6 +141,13 @@ class TransitApp(App):
         container = Container(
             Static("Green Line Map", id="title", classes="bold"),
             GreenLineMapTab(id="green_line_map_ascii"),
+        )
+        return container
+
+    def _combined_map_tab(self):
+        container = Container(
+            Static("Combined Map", id="title", classes="bold"),
+            CombinedMapTab(id="combined_map_ascii"),
         )
         return container
 
