@@ -98,13 +98,17 @@ class TransitApp(App):
         with TabbedContent():
             yield TabPane("Service Alerts", self._alerts_tab(), id="alerts_tab")
             yield TabPane("Routes", self._routes_tab(), id="routes_tab")
-            yield TabPane("Trip Updates", self._trip_updates_tab(), id="trip_updates_tab")
+            yield TabPane(
+                "Trip Updates", self._trip_updates_tab(), id="trip_updates_tab"
+            )
             yield TabPane(
                 "Vehicle Positions",
                 self._vehicle_positions_tab(),
                 id="vehicle_positions_tab",
             )
-            yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
+            yield TabPane(
+                "Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab"
+            )
         yield Footer()
 
     def _alerts_tab(self):
