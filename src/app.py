@@ -1,68 +1,56 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, DataTable, TabbedContent, TabPane
 from textual.containers import Container
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+from src.blue_line_map_tab import BlueLineMapTab
 from metro_api import MetroTransitAPI, fetch_service_alerts
 
-
-class AlertsTable(DataTable):
-    def update_alerts(self, alerts):
+class BaseTable(DataTable):
+    def update_table(self, columns, rows):
         self.clear()
-        self.add_columns("Time", "Header", "Effect", "Cause", "Routes", "Description")
+        self.add_columns(*columns)
+        for row in rows:
+            self.add_row(*row)
+
+class AlertsTable(BaseTable):
+    def update_alerts(self, alerts):
+        columns = ["Timestamp", "Header", "Effect", "Cause", "Routes", "Description"]
+        rows = []
         for alert in alerts:
             if "error" in alert:
-                self.add_row("-", alert["error"], "-", "-", "-", "-")
+                rows.append(("-", alert["error"], "-", "-", "-", "-"))
             else:
-                self.add_row(
+                rows.append((
                     alert["timestamp"],
                     alert["header"],
                     alert["effect"],
                     alert["cause"],
-                    (
-                        ", ".join(alert["affected_routes"])
-                        if alert["affected_routes"]
-                        else "-"
-                    ),
+                    ", ".join(alert["affected_routes"]) if alert["affected_routes"] else "-",
                     alert["description"],
-                )
+                ))
+        self.update_table(columns, rows)
 
-
-class RoutesTable(DataTable):
+class RoutesTable(BaseTable):
     def update_routes(self, routes):
-        self.clear()
-        self.add_columns("Route ID", "Route Label")
-        for route in routes:
-            self.add_row(route["route_id"], route["route_label"])
+        columns = ["Route ID", "Route Label"]
+        rows = [(route["route_id"], route["route_label"]) for route in routes]
+        self.update_table(columns, rows)
 
-    def on_button_pressed(self, event):
-        if event.button.id == "routes_btn":
-            self.app.push_screen(RoutesScreen())
-
-
-class TripUpdatesTable(DataTable):
+class TripUpdatesTable(BaseTable):
     def update_trip_updates(self, updates):
-        self.clear()
-        self.add_columns(
-            "Trip ID", "Route ID", "Schedule", "Stop ID", "Arrival", "Departure"
-        )
-        for update in updates:
-            self.add_row(
-                update["trip_id"],
-                update["route_id"],
-                str(update["schedule"]),
-                update["stop_id"],
-                update["arrival"],
-                update["departure"],
-            )
+        columns = ["Trip ID", "Route ID", "Schedule", "Stop ID", "Arrival", "Departure"]
+        rows = [(
+            update["trip_id"],
+            update["route_id"],
+            str(update["schedule"]),
+            update["stop_id"],
+            update["arrival"],
+            update["departure"],
+        ) for update in updates]
+        self.update_table(columns, rows)
 
-
-class VehiclePositionsTable(DataTable):
+class VehiclePositionsTable(BaseTable):
     def update_vehicle_positions(self, vehicles):
-        self.clear()
-        self.add_columns(
+        columns = [
             "Vehicle ID",
             "Trip ID",
             "Route ID",
@@ -70,21 +58,17 @@ class VehiclePositionsTable(DataTable):
             "Longitude",
             "Speed",
             "Timestamp",
-        )
-        for v in vehicles:
-            self.add_row(
-                v["vehicle_id"],
-                v["trip_id"],
-                v["route_id"],
-                str(v["latitude"]),
-                str(v["longitude"]),
-                str(v["speed"]),
-                v["timestamp"],
-            )
-
-
-from src.blue_line_map_tab import BlueLineMapTab
-
+        ]
+        rows = [(
+            v["vehicle_id"],
+            v["trip_id"],
+            v["route_id"],
+            str(v["latitude"]),
+            str(v["longitude"]),
+            str(v["speed"]),
+            v["timestamp"],
+        ) for v in vehicles]
+        self.update_table(columns, rows)
 
 class TransitApp(App):
     CSS_PATH = None
@@ -99,11 +83,7 @@ class TransitApp(App):
             yield TabPane("Service Alerts", self._alerts_tab(), id="alerts_tab")
             yield TabPane("Routes", self._routes_tab(), id="routes_tab")
             yield TabPane("Trip Updates", self._trip_updates_tab(), id="trip_updates_tab")
-            yield TabPane(
-                "Vehicle Positions",
-                self._vehicle_positions_tab(),
-                id="vehicle_positions_tab",
-            )
+            yield TabPane("Vehicle Positions", self._vehicle_positions_tab(), id="vehicle_positions_tab")
             yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
         yield Footer()
 
@@ -177,23 +157,14 @@ class TransitApp(App):
 
     def refresh_trip_updates(self):
         from metro_api import get_trip_updates
-
         updates = get_trip_updates()
         trip_updates_table = self.query_one("#trip_updates_table", TripUpdatesTable)
         trip_updates_table.update_trip_updates(updates)
 
     def refresh_vehicle_positions(self):
         from metro_api import fetch_vehicle_positions
-
         vehicles = fetch_vehicle_positions()
         vehicle_positions_table = self.query_one(
             "#vehicle_positions_table", VehiclePositionsTable
         )
         vehicle_positions_table.update_vehicle_positions(vehicles)
-
-
-# Entry point only. The main app is now in src/app.py
-from src.app import TransitApp
-
-if __name__ == "__main__":
-    TransitApp().run()

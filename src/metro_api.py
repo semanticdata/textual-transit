@@ -146,3 +146,55 @@ def fetch_vehicle_positions():
         return []
     except Exception as e:
         return []
+
+def get_blue_line_map(direction_id=0):
+    """Return a list of (stop_name, is_train_present) for the Blue Line as a simple line map, using a static list of stations and coordinates."""
+    # Static list of Blue Line stations and their coordinates
+    blue_line_stations = [
+        {"name": "Target Field", "latitude": 44.98273774554354, "longitude": -93.2771229326485},
+        {"name": "Warehouse District", "latitude": 44.980014848747246, "longitude": -93.27308434620137},
+        {"name": "Nicollet Mall", "latitude": 44.97859138358841, "longitude": -93.26996730048722},
+        {"name": "Government Plaza", "latitude": 44.97682283272789, "longitude": -93.26587417721858},
+        {"name": "US Bank Stadium", "latitude": 44.97497444892588, "longitude": -93.25997912687492},
+        {"name": "Cedar Riverside", "latitude": 44.96826934496696, "longitude": -93.25096004322353},
+        {"name": "Franklin Ave", "latitude": 44.962606137796016, "longitude": -93.24707575602082},
+        {"name": "Lake Street", "latitude": 44.94837340247245, "longitude": -93.2389128467151},
+        {"name": "E 38th St", "latitude": 44.93472240439674, "longitude": -93.22950278794424},
+        {"name": "E 46th St", "latitude": 44.920800325853165, "longitude": -93.21992949097658},
+        {"name": "E 50th St", "latitude": 44.912364183788824, "longitude": -93.21009193673245},
+        {"name": "Fort Snelling", "latitude": 44.893258537602065, "longitude": -93.1980795103267},
+        {"name": "Terminal 1 Lindbergh", "latitude": 44.88073555392563, "longitude": -93.20493031246059},
+        {"name": "Terminal 2 Humphrey", "latitude": 44.87415531952441, "longitude": -93.22414366084229},
+        {"name": "American Blvd. E", "latitude": 44.85872035632548, "longitude": -93.22316877441781},
+        {"name": "Bloomington Central", "latitude": 44.8563874755882, "longitude": -93.22640706749567},
+        {"name": "30th Ave", "latitude": 44.855843564898116, "longitude": -93.23157700023783},
+        {"name": "Mall of America", "latitude": 44.85421891854283, "longitude": -93.2388844110575},
+    ]
+    stop_names = [station["name"] for station in blue_line_stations]
+    stop_coords = [(station["latitude"], station["longitude"]) for station in blue_line_stations]
+
+    route_id = "901"  # Blue Line
+    # Get vehicle positions for Blue Line
+    vehicles = fetch_vehicle_positions()
+    blue_line_vehicles = [v for v in vehicles if v["route_id"] == route_id]
+    # Find closest stop for each train
+    train_stop_indices = set()
+    for vehicle in blue_line_vehicles:
+        min_dist = float("inf")
+        closest_idx = None
+        for i, (lat, lon) in enumerate(stop_coords):
+            if lat is None or lon is None:
+                continue
+            dlat = lat - vehicle["latitude"]
+            dlon = lon - vehicle["longitude"]
+            dist = dlat * dlat + dlon * dlon
+            if dist < min_dist:
+                min_dist = dist
+                closest_idx = i
+        if closest_idx is not None:
+            train_stop_indices.add(closest_idx)
+    # Build map: list of (stop_name, is_train_present)
+    line_map = [(name, idx in train_stop_indices) for idx, name in enumerate(stop_names)]
+    return line_map
+
+
