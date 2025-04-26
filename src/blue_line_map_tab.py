@@ -83,7 +83,7 @@ class BlueLineMapTab(Static):
             prevs = cache[vehicle_id]
             # Determine marker
             if len(prevs) < 2:
-                marker = "O"
+                marker = "■"
             else:
                 prev_lat, curr_lat = prevs
                 if curr_lat > prev_lat:
@@ -91,14 +91,59 @@ class BlueLineMapTab(Static):
                 elif curr_lat < prev_lat:
                     marker = "▼"  # southbound
                 else:
-                    marker = "O"  # stationary
+                    marker = "■"  # stationary
             stop_markers[closest_idx] = marker
         # Compose map lines
+        import re
+        def strip_markup(s):
+            return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
+
         lines = []
-        lines.append(f"Last refreshed: {self.last_refresh_time}")
+        width = 60
+        marker_col = 30  # Center marker (1-based)
+        label_width = marker_col - 4
+        # Last refreshed info
+        lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
+        # Map body (no box, no spacing)
         for idx, (stop, is_train) in enumerate(line_map):
-            marker = stop_markers[idx] if is_train else "|"
-            lines.append(f"{marker} {stop}")
+            marker = stop_markers[idx] if is_train else "│"
+            # Colorful markers
+            if marker == "│":
+                marker_colored = "[blue]│[/]"
+            elif marker == "■":
+                marker_colored = "[yellow]■[/]"
+            elif marker == "▲":
+                marker_colored = "[cyan]▲[/]"
+            elif marker == "▼":
+                marker_colored = "[magenta]▼[/]"
+            else:
+                marker_colored = marker
+            label = f"[b]{stop}[/]"
+            label_bg = "[black on bright_white]"
+            label_fmt = f"{label_bg}{label}[/]"
+            if is_train:
+                label_fmt = f"[reverse]{label_fmt}[/]"
+            # Compose plain line for alignment: marker always left, label always right
+            plain_label = strip_markup(stop)
+            left = ' ' * (marker_col - 1)
+            right = f"   {plain_label}"
+            plain_line = f"{left}{marker}{right}"
+            # Now apply markup
+            line = plain_line.replace(marker, marker_colored, 1)
+            line = line.replace(plain_label, label_fmt, 1)
+            lines.append(line)
+        # Legend
+        legend = (
+            "[b][yellow]■[/]: Stationary  "
+            "[cyan]▲[/]: Northbound  "
+            "[magenta]▼[/]: Southbound  "
+            "[blue]│[/]: Track[/b]"
+        )
+        lines.append("")
+        lines.append(legend)
+        self.update("\n".join(lines))
+
+
         self.update("\n".join(lines))
 
 
