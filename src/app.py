@@ -6,7 +6,7 @@ from src.status_bar import StatusBar
 from src.blue_line_map_tab import BlueLineMapTab
 from src.green_line_map_tab import GreenLineMapTab
 from src.combined_map_tab import CombinedMapTab
-from metro_api import MetroTransitAPI, fetch_service_alerts
+from .metro_api import MetroTransitAPI, fetch_service_alerts
 from src.tables import AlertsTable, RoutesTable, TripUpdatesTable, VehiclePositionsTable
 
 
@@ -155,7 +155,7 @@ class TransitApp(App):
         bar.update_refresh_time(now)
 
     def refresh_trip_updates(self):
-        from metro_api import get_trip_updates
+        from .metro_api import get_trip_updates
 
         updates = get_trip_updates()
         trip_updates_table = self.query_one("#trip_updates_table", TripUpdatesTable)
@@ -165,7 +165,7 @@ class TransitApp(App):
         bar.update_refresh_time(now)
 
     def refresh_vehicle_positions(self):
-        from metro_api import fetch_vehicle_positions
+        from .metro_api import fetch_vehicle_positions
 
         vehicles = fetch_vehicle_positions()
         vehicle_positions_table = self.query_one(

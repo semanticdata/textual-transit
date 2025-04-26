@@ -1,6 +1,7 @@
 from textual.widgets import Static
 from textual.containers import Container
 from textual.timer import Timer
+from .metro_api import get_green_line_map
 
 
 class GreenLineMapTab(Static):
@@ -69,7 +70,7 @@ class GreenLineMapTab(Static):
         )
 
     def refresh_map(self):
-        from metro_api import get_green_line_map, fetch_vehicle_positions
+        from .metro_api import get_green_line_map, fetch_vehicle_positions
         from datetime import datetime
 
         # Get both the line map and vehicle positions
@@ -98,7 +99,7 @@ class GreenLineMapTab(Static):
             lat = v["latitude"]
             closest_idx = None
             min_dist = float("inf")
-            from metro_api import get_green_line_map
+            from .metro_api import get_green_line_map
 
             # Use the same static stop_coords as in get_green_line_map
             green_line_stations = [
