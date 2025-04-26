@@ -22,9 +22,16 @@ class GreenLineMapTab(Static):
         self.vehicle_direction_cache = {}  # {vehicle_id: direction: 'stationary'|'northbound'|'southbound'}
         self.last_refresh_time = None
 
-    def on_mount(self):
-        self.set_interval(5, self.refresh_map)
+    def on_show(self):
+        if not hasattr(self, 'refresh_timer') or self.refresh_timer is None:
+            self.refresh_timer = self.set_interval(5, self.refresh_map)
         self.refresh_map()
+
+    def on_hide(self):
+        if hasattr(self, 'refresh_timer') and self.refresh_timer is not None:
+            self.refresh_timer.stop()
+            self.refresh_timer = None
+
 
     def render_map_line(self, stop, marker, is_train, label_pad=0):
         import re
@@ -68,8 +75,11 @@ class GreenLineMapTab(Static):
         route_id = "902"  # Green Line
         green_line_vehicles = [v for v in vehicles if v["route_id"] == route_id]
 
-        # For feedback: set last refresh time
-        self.last_refresh_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # For feedback: set last refresh time and update the StatusBar widget
+        now = datetime.now()
+        self.last_refresh_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        bar = self.app.query_one("#green_line_map_status_bar")
+        bar.update_refresh_time(now)
 
         # Get station names from line_map helper
         green_line_stations = [stop for stop, _ in line_map]
@@ -160,9 +170,11 @@ class GreenLineMapTab(Static):
             # Only assign marker if closest_idx is valid
             if closest_idx is not None:
                 stop_markers[closest_idx] = marker
+        now = datetime.now()
+        bar = self.app.query_one("#green_line_map_status_bar")
+        bar.update_refresh_time(now)
         # Compose map lines
         lines = []
-        lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
         # For left-label alignment, compute max label width
         if self.label_on_left:
             import re

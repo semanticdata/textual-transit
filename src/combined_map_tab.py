@@ -31,9 +31,16 @@ class CombinedMapTab(Static):
         self.green_direction_cache = {}
         self.last_refresh_time = None
 
-    def on_mount(self):
-        self.set_interval(5, self.refresh_map)
+    def on_show(self):
+        if not hasattr(self, 'refresh_timer') or self.refresh_timer is None:
+            self.refresh_timer = self.set_interval(5, self.refresh_map)
         self.refresh_map()
+
+    def on_hide(self):
+        if hasattr(self, 'refresh_timer') and self.refresh_timer is not None:
+            self.refresh_timer.stop()
+            self.refresh_timer = None
+
 
     def render_map_line(self, blue_stop, blue_marker, blue_is_train, green_marker, green_is_train, green_stop, label_pad=0):
         import re
@@ -156,9 +163,10 @@ class CombinedMapTab(Static):
         blue_trains = get_train_indices(blue_stations, blue_coords, blue_vehicles)
         green_trains = get_train_indices(green_stations, green_coords, green_vehicles, is_green=True)
         # Compose map lines
-        self.last_refresh_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
+        bar = self.app.query_one("#combined_map_status_bar")
+        bar.update_refresh_time(now)
         lines = []
-        lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
         import re
         def strip_markup(s):
             return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)

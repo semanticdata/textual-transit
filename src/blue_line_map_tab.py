@@ -57,10 +57,16 @@ class BlueLineMapTab(Static):
             f"[b]{self.MARKER_STYLES['│']}[/b]: Track"
         )
 
-    def on_mount(self):
-        # Start periodic refresh every 5 seconds
-        self.set_interval(5, self.refresh_map)
+    def on_show(self):
+        if not hasattr(self, 'refresh_timer') or self.refresh_timer is None:
+            self.refresh_timer = self.set_interval(5, self.refresh_map)
         self.refresh_map()
+
+    def on_hide(self):
+        if hasattr(self, 'refresh_timer') and self.refresh_timer is not None:
+            self.refresh_timer.stop()
+            self.refresh_timer = None
+
 
     def refresh_map(self):
         from metro_api import fetch_vehicle_positions
@@ -71,8 +77,11 @@ class BlueLineMapTab(Static):
         route_id = "901"  # Blue Line
         blue_line_vehicles = [v for v in vehicles if v["route_id"] == route_id]
 
-        # For feedback: set last refresh time
-        self.last_refresh_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # For feedback: set last refresh time and update the StatusBar widget
+        now = datetime.now()
+        self.last_refresh_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        bar = self.app.query_one("#blue_line_map_status_bar")
+        bar.update_refresh_time(now)
 
         blue_line_stations = [
             "Target Field", "Warehouse District", "Nicollet Mall", "Government Plaza", "US Bank Stadium", "Cedar Riverside",
@@ -154,14 +163,10 @@ class BlueLineMapTab(Static):
             else:
                 marker = "■"
             stop_markers[closest_idx] = marker
-        # Compose map lines
-        import re
-        def strip_markup(s):
-            return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
-
+        now = datetime.now()
+        bar = self.app.query_one("#blue_line_map_status_bar")
+        bar.update_refresh_time(now)
         lines = []
-        # Last refreshed info
-        lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
         # Map body (no box, no spacing)
         # For left-label alignment, compute max label width
         if self.label_on_left:
