@@ -12,6 +12,8 @@ from src.tables import AlertsTable, RoutesTable, TripUpdatesTable, VehiclePositi
 
 class TransitApp(App):
     CSS_PATH = None
+    TITLE = "Transit App"
+    SUB_TITLE = "Metro Transit in your terminal"
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh alerts"),
