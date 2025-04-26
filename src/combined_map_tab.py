@@ -62,14 +62,13 @@ class CombinedMapTab(Static):
 
     def render_legend(self):
         return (
-            f"[b]{self.BLUE_MARKER_STYLES['■']}[/b]: Blue Stationary  "
-            f"[b]{self.BLUE_MARKER_STYLES['▲']}[/b]: Blue Northbound  "
-            f"[b]{self.BLUE_MARKER_STYLES['▼']}[/b]: Blue Southbound  "
-            f"[b]{self.GREEN_MARKER_STYLES['■']}[/b]: Green Stationary  "
-            f"[b]{self.GREEN_MARKER_STYLES['▲']}[/b]: Green Eastbound  "
-            f"[b]{self.GREEN_MARKER_STYLES['▼']}[/b]: Green Westbound  "
-            f"[b]{self.BLUE_MARKER_STYLES['│']}[/b]: Blue Track  "
-            f"[b]{self.GREEN_MARKER_STYLES['│']}[/b]: Green Track"
+            f"[b]{self.BLUE_MARKER_STYLES['■']}[/b]: Stationary  "
+            f"[b]{self.BLUE_MARKER_STYLES['▲']}[/b]: Northbound  "
+            f"[b]{self.BLUE_MARKER_STYLES['▼']}[/b]: Southbound  "
+            f"[b]{self.GREEN_MARKER_STYLES['▲']}[/b]: Eastbound  "
+            f"[b]{self.GREEN_MARKER_STYLES['▼']}[/b]: Westbound  "
+            f"[b]{self.BLUE_MARKER_STYLES['│']}[/b]: Blue Line Track  "
+            f"[b]{self.GREEN_MARKER_STYLES['│']}[/b]: Green Line Track"
         )
 
     def refresh_map(self):
