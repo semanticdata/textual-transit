@@ -1,6 +1,7 @@
 from textual.widgets import Static
 from datetime import datetime
 
+
 class StatusBar(Static):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

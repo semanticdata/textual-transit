@@ -1,6 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Static, DataTable, TabbedContent, TabPane
-from textual.widgets._footer import Footer as BaseFooter
+from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
 from textual.containers import Container
 from datetime import datetime
 from src.status_bar import StatusBar
@@ -8,72 +7,8 @@ from src.blue_line_map_tab import BlueLineMapTab
 from src.green_line_map_tab import GreenLineMapTab
 from src.combined_map_tab import CombinedMapTab
 from metro_api import MetroTransitAPI, fetch_service_alerts
+from src.tables import AlertsTable, RoutesTable, TripUpdatesTable, VehiclePositionsTable
 
-class BaseTable(DataTable):
-    def update_table(self, columns, rows):
-        self.clear()
-        self.add_columns(*columns)
-        for row in rows:
-            self.add_row(*row)
-
-class AlertsTable(BaseTable):
-    def update_alerts(self, alerts):
-        columns = ["Timestamp", "Header", "Effect", "Cause", "Routes", "Description"]
-        rows = []
-        for alert in alerts:
-            if "error" in alert:
-                rows.append(("-", alert["error"], "-", "-", "-", "-"))
-            else:
-                rows.append((
-                    alert["timestamp"],
-                    alert["header"],
-                    alert["effect"],
-                    alert["cause"],
-                    ", ".join(alert["affected_routes"]) if alert["affected_routes"] else "-",
-                    alert["description"],
-                ))
-        self.update_table(columns, rows)
-
-class RoutesTable(BaseTable):
-    def update_routes(self, routes):
-        columns = ["Route ID", "Route Label"]
-        rows = [(route["route_id"], route["route_label"]) for route in routes]
-        self.update_table(columns, rows)
-
-class TripUpdatesTable(BaseTable):
-    def update_trip_updates(self, updates):
-        columns = ["Trip ID", "Route ID", "Schedule", "Stop ID", "Arrival", "Departure"]
-        rows = [(
-            update["trip_id"],
-            update["route_id"],
-            str(update["schedule"]),
-            update["stop_id"],
-            update["arrival"],
-            update["departure"],
-        ) for update in updates]
-        self.update_table(columns, rows)
-
-class VehiclePositionsTable(BaseTable):
-    def update_vehicle_positions(self, vehicles):
-        columns = [
-            "Vehicle ID",
-            "Trip ID",
-            "Route ID",
-            "Latitude",
-            "Longitude",
-            "Speed",
-            "Timestamp",
-        ]
-        rows = [(
-            v["vehicle_id"],
-            v["trip_id"],
-            v["route_id"],
-            str(v["latitude"]),
-            str(v["longitude"]),
-            str(v["speed"]),
-            v["timestamp"],
-        ) for v in vehicles]
-        self.update_table(columns, rows)
 
 class TransitApp(App):
     CSS_PATH = None
@@ -94,13 +29,29 @@ class TransitApp(App):
         with TabbedContent():
             yield TabPane("Service Alerts", self._alerts_tab(), id="alerts_tab")
             yield TabPane("Routes", self._routes_tab(), id="routes_tab")
-            yield TabPane("Trip Updates", self._trip_updates_tab(), id="trip_updates_tab")
-            yield TabPane("Vehicle Positions", self._vehicle_positions_tab(), id="vehicle_positions_tab")
+            yield TabPane(
+                "Trip Updates", self._trip_updates_tab(), id="trip_updates_tab"
+            )
+            yield TabPane(
+                "Vehicle Positions",
+                self._vehicle_positions_tab(),
+                id="vehicle_positions_tab",
+            )
             with TabPane("Live Maps", id="live_maps_tab"):
                 with TabbedContent():
-                    yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
-                    yield TabPane("Green Line Map", self._green_line_map_tab(), id="green_line_map_tab")
-                    yield TabPane("Combined Map", self._combined_map_tab(), id="combined_map_tab")
+                    yield TabPane(
+                        "Blue Line Map",
+                        self._blue_line_map_tab(),
+                        id="blue_line_map_tab",
+                    )
+                    yield TabPane(
+                        "Green Line Map",
+                        self._green_line_map_tab(),
+                        id="green_line_map_tab",
+                    )
+                    yield TabPane(
+                        "Combined Map", self._combined_map_tab(), id="combined_map_tab"
+                    )
         yield Footer()
 
     def _alerts_tab(self):
@@ -203,6 +154,7 @@ class TransitApp(App):
 
     def refresh_trip_updates(self):
         from metro_api import get_trip_updates
+
         updates = get_trip_updates()
         trip_updates_table = self.query_one("#trip_updates_table", TripUpdatesTable)
         trip_updates_table.update_trip_updates(updates)
@@ -212,6 +164,7 @@ class TransitApp(App):
 
     def refresh_vehicle_positions(self):
         from metro_api import fetch_vehicle_positions
+
         vehicles = fetch_vehicle_positions()
         vehicle_positions_table = self.query_one(
             "#vehicle_positions_table", VehiclePositionsTable

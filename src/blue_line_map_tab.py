@@ -4,6 +4,7 @@ from metro_api import get_blue_line_map
 
 from textual.timer import Timer
 
+
 class BlueLineMapTab(Static):
     refresh_timer: Timer | None = None
     # Marker styles for easy customization
@@ -26,8 +27,10 @@ class BlueLineMapTab(Static):
 
     def render_map_line(self, stop, marker, is_train, label_pad=0):
         import re
+
         def strip_markup(s):
-            return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
+            return re.sub(r"\[/?[a-zA-Z0-9 _]+\]", "", s)
+
         marker_colored = self.MARKER_STYLES.get(marker, marker)
         label = f"[b]{stop}[/]"
         label_bg = "[black on bright_white]"
@@ -37,12 +40,12 @@ class BlueLineMapTab(Static):
         plain_label = strip_markup(stop)
         if self.label_on_left:
             # Pad label to align marker/track
-            label_padded = label_fmt + ' ' * (label_pad - len(plain_label))
+            label_padded = label_fmt + " " * (label_pad - len(plain_label))
             plain_line = f"{label_padded} {marker}"
             line = plain_line.replace(marker, marker_colored, 1)
         else:
             # Marker left, label right (default)
-            left = ' ' * (self.marker_col - 1)
+            left = " " * (self.marker_col - 1)
             right = f"   {plain_label}"
             plain_line = f"{left}{marker}{right}"
             line = plain_line.replace(marker, marker_colored, 1)
@@ -58,19 +61,19 @@ class BlueLineMapTab(Static):
         )
 
     def on_show(self):
-        if not hasattr(self, 'refresh_timer') or self.refresh_timer is None:
+        if not hasattr(self, "refresh_timer") or self.refresh_timer is None:
             self.refresh_timer = self.set_interval(5, self.refresh_map)
         self.refresh_map()
 
     def on_hide(self):
-        if hasattr(self, 'refresh_timer') and self.refresh_timer is not None:
+        if hasattr(self, "refresh_timer") and self.refresh_timer is not None:
             self.refresh_timer.stop()
             self.refresh_timer = None
-
 
     def refresh_map(self):
         from metro_api import fetch_vehicle_positions
         from datetime import datetime
+
         # Get both the line map and vehicle positions
         line_map = get_blue_line_map()
         vehicles = fetch_vehicle_positions()
@@ -84,9 +87,24 @@ class BlueLineMapTab(Static):
         bar.update_refresh_time(now)
 
         blue_line_stations = [
-            "Target Field", "Warehouse District", "Nicollet Mall", "Government Plaza", "US Bank Stadium", "Cedar Riverside",
-            "Franklin Ave", "Lake Street", "E 38th St", "E 46th St", "E 50th St", "Fort Snelling", "Terminal 1 Lindbergh",
-            "Terminal 2 Humphrey", "American Blvd. E", "Bloomington Central", "30th Ave", "Mall of America"
+            "Target Field",
+            "Warehouse District",
+            "Nicollet Mall",
+            "Government Plaza",
+            "US Bank Stadium",
+            "Cedar Riverside",
+            "Franklin Ave",
+            "Lake Street",
+            "E 38th St",
+            "E 46th St",
+            "E 50th St",
+            "Fort Snelling",
+            "Terminal 1 Lindbergh",
+            "Terminal 2 Humphrey",
+            "American Blvd. E",
+            "Bloomington Central",
+            "30th Ave",
+            "Mall of America",
         ]
         station_coords = [
             (44.98273774554354, -93.2771229326485),  # Target Field
@@ -138,27 +156,27 @@ class BlueLineMapTab(Static):
             prevs = cache[vehicle_id]
             # Direction logic
             if len(prevs) < 2:
-                direction = direction_cache.get(vehicle_id, 'stationary')
+                direction = direction_cache.get(vehicle_id, "stationary")
             else:
                 prev_lat, curr_lat = prevs
-                old_direction = direction_cache.get(vehicle_id, 'stationary')
+                old_direction = direction_cache.get(vehicle_id, "stationary")
                 if curr_lat > prev_lat:
-                    if old_direction != 'northbound':
-                        direction_cache[vehicle_id] = 'northbound'
-                    direction = 'northbound'
+                    if old_direction != "northbound":
+                        direction_cache[vehicle_id] = "northbound"
+                    direction = "northbound"
                 elif curr_lat < prev_lat:
-                    if old_direction != 'southbound':
-                        direction_cache[vehicle_id] = 'southbound'
-                    direction = 'southbound'
+                    if old_direction != "southbound":
+                        direction_cache[vehicle_id] = "southbound"
+                    direction = "southbound"
                 else:
                     # If already has a direction, keep it; else still stationary
                     direction = old_direction
             # Marker assignment
-            if direction == 'stationary':
+            if direction == "stationary":
                 marker = "■"
-            elif direction == 'northbound':
+            elif direction == "northbound":
                 marker = "▲"
-            elif direction == 'southbound':
+            elif direction == "southbound":
                 marker = "▼"
             else:
                 marker = "■"
@@ -171,17 +189,19 @@ class BlueLineMapTab(Static):
         # For left-label alignment, compute max label width
         if self.label_on_left:
             import re
+
             def strip_markup(s):
-                return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
+                return re.sub(r"\[/?[a-zA-Z0-9 _]+\]", "", s)
+
             max_label_len = max(len(strip_markup(stop)) for stop, _ in line_map)
         else:
             max_label_len = 0
         for idx, (stop, is_train) in enumerate(line_map):
             marker = stop_markers[idx] if is_train else "│"
-            lines.append(self.render_map_line(stop, marker, is_train, label_pad=max_label_len))
+            lines.append(
+                self.render_map_line(stop, marker, is_train, label_pad=max_label_len)
+            )
         # Legend
         lines.append("")
         lines.append(self.render_legend())
         self.update("\n".join(lines))
-
-
