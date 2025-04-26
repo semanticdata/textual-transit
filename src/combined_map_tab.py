@@ -1,7 +1,7 @@
 from textual.widgets import Static
 from textual.timer import Timer
-from .metro_api import get_blue_line_map, get_green_line_map, fetch_vehicle_positions
-from datetime import datetime
+
+from .metro_api import get_blue_line_map, get_green_line_map
 
 
 class CombinedMapTab(Static):

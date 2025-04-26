@@ -1,8 +1,7 @@
 from textual.widgets import Static
-from textual.containers import Container
-from .metro_api import get_blue_line_map
-
 from textual.timer import Timer
+
+from .metro_api import get_blue_line_map
 
 
 class BlueLineMapTab(Static):

@@ -1,7 +1,5 @@
 from textual.widgets import Static
-from textual.containers import Container
 from textual.timer import Timer
-from .metro_api import get_green_line_map
 
 
 class GreenLineMapTab(Static):

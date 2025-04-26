@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
 from textual.containers import Container
-from datetime import datetime
+
 from src.status_bar import StatusBar
 from src.blue_line_map_tab import BlueLineMapTab
 from src.green_line_map_tab import GreenLineMapTab
