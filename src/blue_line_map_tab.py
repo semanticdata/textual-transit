@@ -16,6 +16,7 @@ class BlueLineMapTab(Static):
     marker_col = 30  # Center marker (1-based)
     label_width = marker_col - 4
     width = 60
+    label_on_left = True  # Set to True to display label to the left of the marker
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -23,7 +24,7 @@ class BlueLineMapTab(Static):
         self.vehicle_direction_cache = {}  # {vehicle_id: direction: 'stationary'|'northbound'|'southbound'}
         self.last_refresh_time = None
 
-    def render_map_line(self, stop, marker, is_train):
+    def render_map_line(self, stop, marker, is_train, label_pad=0):
         import re
         def strip_markup(s):
             return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
@@ -34,11 +35,18 @@ class BlueLineMapTab(Static):
         if is_train:
             label_fmt = f"[reverse]{label_fmt}[/]"
         plain_label = strip_markup(stop)
-        left = ' ' * (self.marker_col - 1)
-        right = f"   {plain_label}"
-        plain_line = f"{left}{marker}{right}"
-        line = plain_line.replace(marker, marker_colored, 1)
-        line = line.replace(plain_label, label_fmt, 1)
+        if self.label_on_left:
+            # Pad label to align marker/track
+            label_padded = label_fmt + ' ' * (label_pad - len(plain_label))
+            plain_line = f"{label_padded} {marker}"
+            line = plain_line.replace(marker, marker_colored, 1)
+        else:
+            # Marker left, label right (default)
+            left = ' ' * (self.marker_col - 1)
+            right = f"   {plain_label}"
+            plain_line = f"{left}{marker}{right}"
+            line = plain_line.replace(marker, marker_colored, 1)
+            line = line.replace(plain_label, label_fmt, 1)
         return line
 
     def render_legend(self):
@@ -155,9 +163,17 @@ class BlueLineMapTab(Static):
         # Last refreshed info
         lines.append(f"[b]Last refreshed:[/] [cyan]{self.last_refresh_time}[/]")
         # Map body (no box, no spacing)
+        # For left-label alignment, compute max label width
+        if self.label_on_left:
+            import re
+            def strip_markup(s):
+                return re.sub(r'\[/?[a-zA-Z0-9 _]+\]', '', s)
+            max_label_len = max(len(strip_markup(stop)) for stop, _ in line_map)
+        else:
+            max_label_len = 0
         for idx, (stop, is_train) in enumerate(line_map):
             marker = stop_markers[idx] if is_train else "│"
-            lines.append(self.render_map_line(stop, marker, is_train))
+            lines.append(self.render_map_line(stop, marker, is_train, label_pad=max_label_len))
         # Legend
         lines.append("")
         lines.append(self.render_legend())

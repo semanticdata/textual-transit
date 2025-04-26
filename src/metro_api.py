@@ -147,6 +147,7 @@ def fetch_vehicle_positions():
     except Exception as e:
         return []
 
+
 def get_blue_line_map(direction_id=0):
     """Return a list of (stop_name, is_train_present) for the Blue Line as a simple line map, using a static list of stations and coordinates."""
     # Static list of Blue Line stations and their coordinates
@@ -198,3 +199,57 @@ def get_blue_line_map(direction_id=0):
     return line_map
 
 
+def get_green_line_map(direction_id=0):
+    """Return a list of (stop_name, is_train_present) for the Green Line as a simple line map, using a static list of stations and coordinates."""
+    route_id = "902"  # Green Line
+    green_line_stations = [
+        {"name": "Target Field", "latitude": 44.98273774554354, "longitude": -93.2771229326485},
+        {"name": "Warehouse District", "latitude": 44.980014848747246, "longitude": -93.27308434620137},
+        {"name": "Nicollet Mall", "latitude": 44.97859138358841, "longitude": -93.26996730048722},
+        {"name": "Government Plaza", "latitude": 44.97682283272789, "longitude": -93.26587417721858},
+        {"name": "US Bank Stadium", "latitude": 44.97497444892588, "longitude": -93.25997912687492},
+        {"name": "West Bank", "latitude": 44.97196769934245, "longitude": -93.2461997537969},
+        {"name": "East Bank", "latitude": 44.9736831284348, "longitude": -93.2310795958822},
+        {"name": "Stadium Village", "latitude": 44.974769032187794, "longitude": -93.22284908650379},
+        {"name": "Prospect Park", "latitude": 44.971739958929184, "longitude": -93.21526851217766},
+        {"name": "Westgate", "latitude": 44.96749418594883, "longitude": -93.20650482681971},
+        {"name": "Raymond Ave", "latitude": 44.96308872510821, "longitude": -93.19542804653175},
+        {"name": "Fairview", "latitude": 44.95640241986024, "longitude": -93.17871653792054},
+        {"name": "Snelling Ave", "latitude": 44.955670967365386, "longitude": -93.16699608189725},
+        {"name": "Hamline Ave", "latitude": 44.95571016984779, "longitude": -93.15686019399725},
+        {"name": "Lexington Pkwy", "latitude": 44.95574071525549, "longitude": -93.14663989651139},
+        {"name": "Victoria St", "latitude": 44.955728248423426, "longitude": -93.13654287688762},
+        {"name": "Dale St", "latitude": 44.955720739133305, "longitude": -93.12630030224975},
+        {"name": "Western Ave", "latitude": 44.95575656742864, "longitude": -93.11613231272018},
+        {"name": "Capitol / Rice St", "latitude": 44.95572895657827, "longitude": -93.10515789604243},
+        {"name": "Robert St", "latitude": 44.95401013976643, "longitude": -93.09747973614937},
+        {"name": "10th St E", "latitude": 44.95059283019555, "longitude": -93.0975146533736},
+        {"name": "Central Station", "latitude": 44.94619588548721, "longitude": -93.09230931073459},
+        {"name": "Union Depot", "latitude": 44.948197817711616, "longitude": -93.08681430434538},
+    ]
+    stop_names = [station["name"] for station in green_line_stations]
+    stop_coords = [(station["latitude"], station["longitude"]) for station in green_line_stations]
+
+    vehicles = fetch_vehicle_positions()
+    green_line_vehicles = [v for v in vehicles if v["route_id"] == route_id]
+    train_stop_indices = set()
+    for vehicle in green_line_vehicles:
+        min_dist = float("inf")
+        closest_idx = None
+        for i, (lat, lon) in enumerate(stop_coords):
+            if lat is None or lon is None:
+                continue
+            dlat = lat - vehicle["latitude"]
+            dlon = lon - vehicle["longitude"]
+            dist = dlat * dlat + dlon * dlon
+            if dist < min_dist:
+                min_dist = dist
+                closest_idx = i
+        if closest_idx is not None:
+            train_stop_indices.add(closest_idx)
+
+    # Determine direction for each train (eastbound/westbound) by comparing longitude
+    # Attach direction info for downstream use (e.g., GreenLineMapTab)
+    # We'll return a list of (stop_name, is_train_present, direction) for clarity
+    # But for now, preserve the original return signature
+    return [(stop_names[i], i in train_stop_indices) for i in range(len(stop_names))]
