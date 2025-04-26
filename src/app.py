@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, DataTable, TabbedContent, TabPane
 from textual.containers import Container
 from src.blue_line_map_tab import BlueLineMapTab
+from src.green_line_map_tab import GreenLineMapTab
 from metro_api import MetroTransitAPI, fetch_service_alerts
 
 class BaseTable(DataTable):
@@ -84,7 +85,10 @@ class TransitApp(App):
             yield TabPane("Routes", self._routes_tab(), id="routes_tab")
             yield TabPane("Trip Updates", self._trip_updates_tab(), id="trip_updates_tab")
             yield TabPane("Vehicle Positions", self._vehicle_positions_tab(), id="vehicle_positions_tab")
-            yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
+            with TabPane("Live Maps", id="live_maps_tab"):
+                with TabbedContent():
+                    yield TabPane("Blue Line Map", self._blue_line_map_tab(), id="blue_line_map_tab")
+                    yield TabPane("Green Line Map", self._green_line_map_tab(), id="green_line_map_tab")
         yield Footer()
 
     def _alerts_tab(self):
@@ -122,6 +126,13 @@ class TransitApp(App):
         )
         return container
 
+    def _green_line_map_tab(self):
+        container = Container(
+            Static("Green Line Map", id="title", classes="bold"),
+            GreenLineMapTab(id="green_line_map_ascii"),
+        )
+        return container
+
     def on_mount(self):
         self.refresh_alerts()
         self.refresh_routes()
@@ -140,6 +151,9 @@ class TransitApp(App):
         elif event.tab.id == "blue_line_map_tab":
             blue_line_map = self.query_one("#blue_line_map_ascii", BlueLineMapTab)
             blue_line_map.refresh_map()
+        elif event.tab.id == "green_line_map_tab":
+            green_line_map = self.query_one("#green_line_map_ascii", GreenLineMapTab)
+            green_line_map.refresh_map()
 
     def refresh_alerts(self):
         alerts = fetch_service_alerts()

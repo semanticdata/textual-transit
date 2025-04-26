@@ -10,6 +10,7 @@ class BlueLineMapTab(Static):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.vehicle_lat_cache = {}  # {vehicle_id: [prev_lat, curr_lat]}
+        self.vehicle_direction_cache = {}  # {vehicle_id: direction: 'stationary'|'northbound'|'southbound'}
         self.last_refresh_time = None
 
     def on_mount(self):
@@ -57,6 +58,7 @@ class BlueLineMapTab(Static):
         stop_markers = ["|" for _ in blue_line_stations]
         # Use instance cache
         cache = self.vehicle_lat_cache
+        direction_cache = self.vehicle_direction_cache
         for v in blue_line_vehicles:
             vehicle_id = v["vehicle_id"]
             lat = v["latitude"]
@@ -81,17 +83,32 @@ class BlueLineMapTab(Static):
             else:
                 cache[vehicle_id] = [lat]
             prevs = cache[vehicle_id]
-            # Determine marker
+            # Direction logic
             if len(prevs) < 2:
-                marker = "■"
+                direction = direction_cache.get(vehicle_id, 'stationary')
             else:
                 prev_lat, curr_lat = prevs
+                old_direction = direction_cache.get(vehicle_id, 'stationary')
                 if curr_lat > prev_lat:
-                    marker = "▲"  # northbound
+                    if old_direction != 'northbound':
+                        direction_cache[vehicle_id] = 'northbound'
+                    direction = 'northbound'
                 elif curr_lat < prev_lat:
-                    marker = "▼"  # southbound
+                    if old_direction != 'southbound':
+                        direction_cache[vehicle_id] = 'southbound'
+                    direction = 'southbound'
                 else:
-                    marker = "■"  # stationary
+                    # If already has a direction, keep it; else still stationary
+                    direction = old_direction
+            # Marker assignment
+            if direction == 'stationary':
+                marker = "■"
+            elif direction == 'northbound':
+                marker = "▲"
+            elif direction == 'southbound':
+                marker = "▼"
+            else:
+                marker = "■"
             stop_markers[closest_idx] = marker
         # Compose map lines
         import re
