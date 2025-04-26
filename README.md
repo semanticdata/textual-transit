@@ -14,7 +14,7 @@ A Textual-based TUI (Text User Interface) application for displaying Metro Trans
 
 1. Clone this repository:
    ```sh
-   git clone https://github.com/yourusername/textual-transit.git
+   git clone https://github.com/semanticdata/textual-transit.git
    cd textual-transit
    ```
 2. Install dependencies (Python 3.9+ recommended):
