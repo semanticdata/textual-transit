@@ -23,9 +23,11 @@ class AlertsTable(BaseTable):
                         alert["header"],
                         alert["effect"],
                         alert["cause"],
-                        ", ".join(alert["affected_routes"])
-                        if alert["affected_routes"]
-                        else "-",
+                        (
+                            ", ".join(alert["affected_routes"])
+                            if alert["affected_routes"]
+                            else "-"
+                        ),
                         alert["description"],
                     )
                 )
