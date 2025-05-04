@@ -9,6 +9,7 @@ from src.status_bar import StatusBar
 from src.blue_line_map_tab import BlueLineMapTab
 from src.green_line_map_tab import GreenLineMapTab
 from src.combined_map_tab import CombinedMapTab
+from src.horizontal_map_tab import HorizontalMapTab
 from src.metro_api import MetroTransitAPI, fetch_service_alerts
 from src.tables import AlertsTable, RoutesTable, TripUpdatesTable, VehiclePositionsTable
 
@@ -57,6 +58,9 @@ class TransitApp(App):
                     )
                     yield TabPane(
                         "Combined Map", self._combined_map_tab(), id="combined_map_tab"
+                    )
+                    yield TabPane(
+                        "Horizontal Map", self._horizontal_map_tab(), id="horizontal_map_tab"
                     )
         yield ToastRack()
         yield Footer()
@@ -117,6 +121,14 @@ class TransitApp(App):
         )
         return container
 
+    def _horizontal_map_tab(self):
+        container = Container(
+            Static("Horizontal Map View", id="title", classes="bold"),
+            StatusBar(id="horizontal_map_status_bar"),
+            HorizontalMapTab(id="horizontal_map_ascii"),
+        )
+        return container
+
     def on_mount(self):
         self.refresh_alerts()
         self.refresh_routes()
@@ -138,6 +150,9 @@ class TransitApp(App):
         elif event.tab.id == "green_line_map_tab":
             green_line_map = self.query_one("#green_line_map_ascii", GreenLineMapTab)
             green_line_map.refresh_map()
+        elif event.tab.id == "horizontal_map_tab":
+            horizontal_map = self.query_one("#horizontal_map_ascii", HorizontalMapTab)
+            horizontal_map.refresh_map()
 
     def refresh_alerts(self):
         alerts = fetch_service_alerts()

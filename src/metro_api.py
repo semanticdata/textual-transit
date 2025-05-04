@@ -96,6 +96,48 @@ class DirectionDetector:
 
         return new_direction
 
+    def detect_horizontal_direction(self, vehicle_id: str, coord: float) -> str:
+        """Detect vehicle direction based on longitude changes for horizontal display.
+
+        Args:
+            vehicle_id: The unique identifier of the vehicle
+            coord: The current longitude coordinate
+
+        Returns:
+            Direction as string: 'eastbound', 'westbound', or 'stationary'
+        """
+        if vehicle_id in self.position_cache:
+            prevs = self.position_cache[vehicle_id]
+            if len(prevs) == 2:
+                prevs = [prevs[1], coord]
+            else:
+                prevs.append(coord)
+            self.position_cache[vehicle_id] = prevs
+        else:
+            self.position_cache[vehicle_id] = [coord]
+            return self.direction_cache.get(vehicle_id, "stationary")
+
+        prevs = self.position_cache[vehicle_id]
+        if len(prevs) < 2:
+            return self.direction_cache.get(vehicle_id, "stationary")
+
+        prev_coord, curr_coord = prevs
+        old_direction = self.direction_cache.get(vehicle_id, "stationary")
+        coord_diff = curr_coord - prev_coord
+
+        # Using a smaller threshold for longitude since changes are typically smaller
+        threshold = 0.00005
+
+        if abs(coord_diff) < threshold:
+            return old_direction
+
+        new_direction = "eastbound" if coord_diff > threshold else "westbound"
+        
+        if old_direction != new_direction:
+            self.direction_cache[vehicle_id] = new_direction
+
+        return new_direction
+
     def get_marker(self, direction: str) -> str:
         """Convert a direction to its corresponding marker symbol.
 
@@ -111,6 +153,23 @@ class DirectionDetector:
             return "▲"
         elif direction in ("southbound", "westbound"):
             return "▼"
+        return "●"  # Default to stationary marker
+
+    def get_horizontal_marker(self, direction: str) -> str:
+        """Convert a direction to its corresponding horizontal marker symbol.
+
+        Args:
+            direction: One of 'eastbound', 'westbound', or 'stationary'
+
+        Returns:
+            The marker symbol to use for that direction
+        """
+        if direction == "stationary":
+            return "●"
+        elif direction == "eastbound":
+            return "►"
+        elif direction == "westbound":
+            return "◄"
         return "●"  # Default to stationary marker
 
 
