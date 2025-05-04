@@ -9,8 +9,7 @@ A Textual-based TUI (Text User Interface) application for displaying Metro Trans
 
 - View real-time Metro Transit service alerts
 - See trip updates and vehicle positions
-- Interactive line maps for Blue and Green lines
-- Combined map view
+- Live train maps
 - Status bar with last refresh time
 
 ## Installation
@@ -33,25 +32,4 @@ A Textual-based TUI (Text User Interface) application for displaying Metro Trans
    - textual
    - requests
    - protobuf
-   - google-transit-gtfs-realtime-bindings
-
-## Usage
-
-Run the app from the project root:
-
-```sh
-python main.py
-```
-
-## Project Structure
-
-- `main.py`: Entry point for the application
-- `src/`: Core application modules
-- `src/app.py`: Main Textual app logic
-- `src/metro_api.py`: Metro Transit API and GTFS utilities
-- `src/status_bar.py`: Status bar widget
-- `src/blue_line_map_tab.py`, `src/green_line_map_tab.py`, `src/combined_map_tab.py`: Map views
-
-## License
-
-MIT
+   - gtfs-realtime-bindings
