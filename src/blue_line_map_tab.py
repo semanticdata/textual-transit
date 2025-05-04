@@ -8,10 +8,10 @@ class BlueLineMapTab(Static):
     refresh_timer: Timer | None = None
     # Marker styles for easy customization
     MARKER_STYLES = {
-        "│": "[blue]│[/]",
-        "■": "[yellow]■[/]",
-        "▲": "[cyan]▲[/]",
-        "▼": "[magenta]▼[/]",
+        "║": "[blue]║[/]",  # Double vertical line for tracks
+        "●": "[yellow]●[/]",  # Circle for stationary
+        "▲": "[cyan]▲[/]",  # Up arrow for northbound
+        "▼": "[magenta]▼[/]",  # Down arrow for southbound
     }
     marker_col = 30  # Center marker (1-based)
     label_width = marker_col - 4
@@ -20,8 +20,9 @@ class BlueLineMapTab(Static):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.vehicle_lat_cache = {}  # {vehicle_id: [prev_lat, curr_lat]}
-        self.vehicle_direction_cache = {}  # {vehicle_id: direction: 'stationary'|'northbound'|'southbound'}
+        from .metro_api import DirectionDetector
+
+        self.direction_detector = DirectionDetector()
         self.last_refresh_time = None
 
     def render_map_line(self, stop, marker, is_train, label_pad=0):
@@ -53,10 +54,10 @@ class BlueLineMapTab(Static):
 
     def render_legend(self):
         return (
-            f"[b]{self.MARKER_STYLES['■']}[/b]: Stationary  "
+            f"[b]{self.MARKER_STYLES['●']}[/b]: Stationary  "
             f"[b]{self.MARKER_STYLES['▲']}[/b]: Northbound  "
             f"[b]{self.MARKER_STYLES['▼']}[/b]: Southbound  "
-            f"[b]{self.MARKER_STYLES['│']}[/b]: Track"
+            f"[b]{self.MARKER_STYLES['║']}[/b]: Track"
         )
 
     def on_show(self):
@@ -70,7 +71,12 @@ class BlueLineMapTab(Static):
             self.refresh_timer = None
 
     def refresh_map(self):
-        from .metro_api import fetch_vehicle_positions
+        from .metro_api import (
+            get_blue_line_map,
+            fetch_vehicle_positions,
+            get_station_coordinates,
+            get_coordinates_list,
+        )
         from datetime import datetime
 
         # Get both the line map and vehicle positions
@@ -85,50 +91,15 @@ class BlueLineMapTab(Static):
         bar = self.app.query_one("#blue_line_map_status_bar")
         bar.update_refresh_time(now)
 
-        blue_line_stations = [
-            "Target Field",
-            "Warehouse District",
-            "Nicollet Mall",
-            "Government Plaza",
-            "US Bank Stadium",
-            "Cedar Riverside",
-            "Franklin Ave",
-            "Lake Street",
-            "E 38th St",
-            "E 46th St",
-            "E 50th St",
-            "Fort Snelling",
-            "Terminal 1 Lindbergh",
-            "Terminal 2 Humphrey",
-            "American Blvd. E",
-            "Bloomington Central",
-            "30th Ave",
-            "Mall of America",
-        ]
-        station_coords = [
-            (44.98273774554354, -93.2771229326485),  # Target Field
-            (44.980014848747246, -93.27308434620137),
-            (44.97859138358841, -93.26996730048722),
-            (44.97682283272789, -93.26587417721858),
-            (44.97497444892588, -93.25997912687492),
-            (44.96826934496696, -93.25096004322353),
-            (44.962606137796016, -93.24707575602082),
-            (44.94837340247245, -93.2389128467151),
-            (44.93472240439674, -93.22950278794424),
-            (44.920800325853165, -93.21992949097658),
-            (44.912364183788824, -93.21009193673245),
-            (44.893258537602065, -93.1980795103267),
-            (44.88073555392563, -93.20493031246059),
-            (44.87415531952441, -93.22414366084229),
-            (44.85872035632548, -93.22316877441781),
-            (44.8563874755882, -93.22640706749567),
-            (44.855843564898116, -93.23157700023783),
-            (44.85421891854283, -93.2388844110575),
-        ]
-        stop_markers = ["|" for _ in blue_line_stations]
-        # Use instance cache
-        cache = self.vehicle_lat_cache
-        direction_cache = self.vehicle_direction_cache
+        # Get station names from line_map helper
+        blue_line_stations = [stop for stop, _ in line_map]
+        stop_markers = [
+            "║" for _ in blue_line_stations
+        ]  # Initialize with track markers
+
+        # Get station coordinates from metro_api
+        station_coords = get_coordinates_list("blue")
+
         for v in blue_line_vehicles:
             vehicle_id = v["vehicle_id"]
             lat = v["latitude"]
@@ -142,50 +113,18 @@ class BlueLineMapTab(Static):
                 if dist < min_dist:
                     min_dist = dist
                     closest_idx = i
-            # Update direction cache: store last two latitudes
-            if vehicle_id in cache:
-                prevs = cache[vehicle_id]
-                if len(prevs) == 2:
-                    prevs = [prevs[1], lat]
-                else:
-                    prevs.append(lat)
-                cache[vehicle_id] = prevs
-            else:
-                cache[vehicle_id] = [lat]
-            prevs = cache[vehicle_id]
-            # Direction logic
-            if len(prevs) < 2:
-                direction = direction_cache.get(vehicle_id, "stationary")
-            else:
-                prev_lat, curr_lat = prevs
-                old_direction = direction_cache.get(vehicle_id, "stationary")
-                if curr_lat > prev_lat:
-                    if old_direction != "northbound":
-                        direction_cache[vehicle_id] = "northbound"
-                    direction = "northbound"
-                elif curr_lat < prev_lat:
-                    if old_direction != "southbound":
-                        direction_cache[vehicle_id] = "southbound"
-                    direction = "southbound"
-                else:
-                    # If already has a direction, keep it; else still stationary
-                    direction = old_direction
-            # Marker assignment
-            if direction == "stationary":
-                marker = "■"
-            elif direction == "northbound":
-                marker = "▲"
-            elif direction == "southbound":
-                marker = "▼"
-            else:
-                marker = "■"
-            stop_markers[closest_idx] = marker
-        now = datetime.now()
-        bar = self.app.query_one("#blue_line_map_status_bar")
-        bar.update_refresh_time(now)
+
+            # Use DirectionDetector for direction detection
+            direction = self.direction_detector.detect_direction(
+                vehicle_id, lat, is_latitude=True
+            )
+            marker = self.direction_detector.get_marker(direction)
+
+            if closest_idx is not None:
+                stop_markers[closest_idx] = marker
+
+        # Update display
         lines = []
-        # Map body (no box, no spacing)
-        # For left-label alignment, compute max label width
         if self.label_on_left:
             import re
 
@@ -195,11 +134,13 @@ class BlueLineMapTab(Static):
             max_label_len = max(len(strip_markup(stop)) for stop, _ in line_map)
         else:
             max_label_len = 0
+
         for idx, (stop, is_train) in enumerate(line_map):
-            marker = stop_markers[idx] if is_train else "│"
+            marker = stop_markers[idx]
             lines.append(
                 self.render_map_line(stop, marker, is_train, label_pad=max_label_len)
             )
+
         # Legend
         lines.append("")
         lines.append(self.render_legend())
