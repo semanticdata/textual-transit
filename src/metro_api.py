@@ -1,7 +1,9 @@
-import requests
-from typing import Dict, List
-from google.transit import gtfs_realtime_pb2
 from datetime import datetime
+from typing import Dict, List
+
+import requests
+from google.transit import gtfs_realtime_pb2
+
 from .station_data import BLUE_LINE_STATIONS, GREEN_LINE_STATIONS
 
 
@@ -132,7 +134,7 @@ class DirectionDetector:
             return old_direction
 
         new_direction = "eastbound" if coord_diff > threshold else "westbound"
-        
+
         if old_direction != new_direction:
             self.direction_cache[vehicle_id] = new_direction
 
@@ -220,7 +222,7 @@ def fetch_trip_updates():
         feed = gtfs_realtime_pb2.FeedMessage()
         feed.ParseFromString(response.content)
         return feed
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -288,9 +290,9 @@ def fetch_vehicle_positions():
             }
             vehicles.append(vehicle_data)
         return vehicles
-    except requests.RequestException as e:
+    except requests.RequestException:
         return []
-    except Exception as e:
+    except Exception:
         return []
 
 

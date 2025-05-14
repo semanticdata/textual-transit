@@ -1,4 +1,0 @@
-textual>=0.46.0
-requests
-gtfs-realtime-bindings
-protobuf

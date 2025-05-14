@@ -1,16 +1,16 @@
 from datetime import datetime
 
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Static, TabbedContent, TabPane
-from textual.widgets._toast import ToastRack
 from textual.containers import Container
+from textual.widgets import Footer, Header, Static, TabbedContent, TabPane
+from textual.widgets._toast import ToastRack
 
-from src.status_bar import StatusBar
 from src.blue_line_map_tab import BlueLineMapTab
-from src.green_line_map_tab import GreenLineMapTab
 from src.combined_map_tab import CombinedMapTab
+from src.green_line_map_tab import GreenLineMapTab
 from src.horizontal_map_tab import HorizontalMapTab
 from src.metro_api import MetroTransitAPI, fetch_service_alerts
+from src.status_bar import StatusBar
 from src.tables import AlertsTable, RoutesTable, TripUpdatesTable, VehiclePositionsTable
 
 
@@ -60,7 +60,9 @@ class TransitApp(App):
                         "Combined Map", self._combined_map_tab(), id="combined_map_tab"
                     )
                     yield TabPane(
-                        "Horizontal Map", self._horizontal_map_tab(), id="horizontal_map_tab"
+                        "Horizontal Map",
+                        self._horizontal_map_tab(),
+                        id="horizontal_map_tab",
                     )
         yield ToastRack()
         yield Footer()

@@ -1,12 +1,10 @@
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 from .metro_api import (
-    get_blue_line_map,
-    get_green_line_map,
-    get_station_coordinates,
-    get_coordinates_list,
     fetch_vehicle_positions,
+    get_coordinates_list,
+    get_station_coordinates,
 )
 
 

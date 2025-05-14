@@ -1,5 +1,6 @@
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
+
 from .metro_api import DirectionDetector
 
 
@@ -39,7 +40,7 @@ class HorizontalMapTab(Static):
             track_line += self.MARKER_STYLES[marker]
 
             # Add station number (centered under marker)
-            station_num = f"[blue]{i+1}[/]"
+            station_num = f"[blue]{i + 1}[/]"
             number_line += station_num
 
             # Format station label for the list
@@ -47,7 +48,7 @@ class HorizontalMapTab(Static):
             if is_train:
                 label = f"[reverse]{label}[/]"
             station_lines.append(
-                (f"{i+1}. {label}", len(f"{i+1}. {stop}"))
+                (f"{i + 1}. {label}", len(f"{i + 1}. {stop}"))
             )  # Store actual content length
 
         # Create the station list in two columns with proper alignment
@@ -94,13 +95,13 @@ class HorizontalMapTab(Static):
             self.refresh_timer = None
 
     def refresh_map(self):
+        from datetime import datetime
+
         from .metro_api import (
-            get_blue_line_map,
             fetch_vehicle_positions,
-            get_station_coordinates,
+            get_blue_line_map,
             get_coordinates_list,
         )
-        from datetime import datetime
 
         # Get both the line map and vehicle positions
         line_map = get_blue_line_map()

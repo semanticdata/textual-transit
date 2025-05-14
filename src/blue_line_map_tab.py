@@ -1,5 +1,5 @@
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 from .metro_api import get_blue_line_map
 
@@ -71,13 +71,12 @@ class BlueLineMapTab(Static):
             self.refresh_timer = None
 
     def refresh_map(self):
+        from datetime import datetime
+
         from .metro_api import (
-            get_blue_line_map,
             fetch_vehicle_positions,
-            get_station_coordinates,
             get_coordinates_list,
         )
-        from datetime import datetime
 
         # Get both the line map and vehicle positions
         line_map = get_blue_line_map()
