@@ -1,5 +1,5 @@
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 from .metro_api import get_blue_line_map
 
@@ -71,13 +71,12 @@ class BlueLineMapTab(Static):
             self.refresh_timer = None
 
     def refresh_map(self):
+        from datetime import datetime
+
         from .metro_api import (
-            get_blue_line_map,
             fetch_vehicle_positions,
-            get_station_coordinates,
             get_coordinates_list,
         )
-        from datetime import datetime
 
         # Get both the line map and vehicle positions
         line_map = get_blue_line_map()
@@ -93,9 +92,7 @@ class BlueLineMapTab(Static):
 
         # Get station names from line_map helper
         blue_line_stations = [stop for stop, _ in line_map]
-        stop_markers = [
-            "║" for _ in blue_line_stations
-        ]  # Initialize with track markers
+        stop_markers = ["║" for _ in blue_line_stations]  # Initialize with track markers
 
         # Get station coordinates from metro_api
         station_coords = get_coordinates_list("blue")
@@ -115,9 +112,7 @@ class BlueLineMapTab(Static):
                     closest_idx = i
 
             # Use DirectionDetector for direction detection
-            direction = self.direction_detector.detect_direction(
-                vehicle_id, lat, is_latitude=True
-            )
+            direction = self.direction_detector.detect_direction(vehicle_id, lat, is_latitude=True)
             marker = self.direction_detector.get_marker(direction)
 
             if closest_idx is not None:
@@ -137,9 +132,7 @@ class BlueLineMapTab(Static):
 
         for idx, (stop, is_train) in enumerate(line_map):
             marker = stop_markers[idx]
-            lines.append(
-                self.render_map_line(stop, marker, is_train, label_pad=max_label_len)
-            )
+            lines.append(self.render_map_line(stop, marker, is_train, label_pad=max_label_len))
 
         # Legend
         lines.append("")

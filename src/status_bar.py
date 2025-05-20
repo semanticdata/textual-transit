@@ -1,5 +1,6 @@
-from textual.widgets import Static
 from datetime import datetime
+
+from textual.widgets import Static
 
 
 class StatusBar(Static):

@@ -1,12 +1,10 @@
-from textual.widgets import Static
 from textual.timer import Timer
+from textual.widgets import Static
 
 from .metro_api import (
-    get_blue_line_map,
-    get_green_line_map,
-    get_station_coordinates,
-    get_coordinates_list,
     fetch_vehicle_positions,
+    get_coordinates_list,
+    get_station_coordinates,
 )
 
 
@@ -51,29 +49,13 @@ class CombinedMapTab(Static):
         green_station, green_marker = green_data if green_data else ("", "")
 
         # Format station names with consistent width
-        blue_label = (
-            f"[bright_white]{station_name:<{max_label_len}}[/]"
-            if station_name
-            else " " * max_label_len
-        )
-        green_label = (
-            f"[bright_white]{green_station:<{max_label_len}}[/]"
-            if green_station
-            else " " * max_label_len
-        )
+        blue_label = f"[bright_white]{station_name:<{max_label_len}}[/]" if station_name else " " * max_label_len
+        green_label = f"[bright_white]{green_station:<{max_label_len}}[/]" if green_station else " " * max_label_len
 
         # Create track/marker visualization
-        blue_vis = (
-            self.BLUE_MARKER_STYLES.get(blue_marker, self.BLUE_MARKER_STYLES["track"])
-            if blue_marker
-            else " "
-        )
+        blue_vis = self.BLUE_MARKER_STYLES.get(blue_marker, self.BLUE_MARKER_STYLES["track"]) if blue_marker else " "
         green_vis = (
-            self.GREEN_MARKER_STYLES.get(
-                green_marker, self.GREEN_MARKER_STYLES["track"]
-            )
-            if green_marker
-            else " "
+            self.GREEN_MARKER_STYLES.get(green_marker, self.GREEN_MARKER_STYLES["track"]) if green_marker else " "
         )
 
         # Combine into single line with padding
@@ -99,9 +81,7 @@ class CombinedMapTab(Static):
 
         # Get station data
         blue_stations = [station["name"] for station in get_station_coordinates("blue")]
-        green_stations = [
-            station["name"] for station in get_station_coordinates("green")
-        ]
+        green_stations = [station["name"] for station in get_station_coordinates("green")]
 
         # Get vehicle positions
         vehicles = fetch_vehicle_positions()
@@ -126,12 +106,8 @@ class CombinedMapTab(Static):
                     # Determine direction based on position relative to previous station
                     if station_idx > 0:
                         prev_lat, prev_lon = coords[station_idx - 1]
-                        if abs(vehicle["latitude"] - prev_lat) > abs(
-                            vehicle["longitude"] - prev_lon
-                        ):
-                            return (
-                                "north" if vehicle["latitude"] > prev_lat else "south"
-                            )
+                        if abs(vehicle["latitude"] - prev_lat) > abs(vehicle["longitude"] - prev_lon):
+                            return "north" if vehicle["latitude"] > prev_lat else "south"
                         else:
                             return "east" if vehicle["longitude"] > prev_lon else "west"
                     return "train"
@@ -145,11 +121,7 @@ class CombinedMapTab(Static):
         )
 
         # Add header
-        lines.append(
-            "[bold blue]Blue Line[/]"
-            + " " * (max_label_len * 2)
-            + "[bold green]Green Line[/]"
-        )
+        lines.append("[bold blue]Blue Line[/]" + " " * (max_label_len * 2) + "[bold green]Green Line[/]")
         lines.append("-" * (max_label_len * 2 + 20))
 
         # Create station lines

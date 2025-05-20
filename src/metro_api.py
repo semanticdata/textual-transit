@@ -1,7 +1,9 @@
-import requests
-from typing import Dict, List
-from google.transit import gtfs_realtime_pb2
 from datetime import datetime
+from typing import Dict, List
+
+import requests
+from google.transit import gtfs_realtime_pb2
+
 from .station_data import BLUE_LINE_STATIONS, GREEN_LINE_STATIONS
 
 
@@ -34,13 +36,9 @@ class DirectionDetector:
     def __init__(self):
         self.position_cache = {}  # {vehicle_id: [prev_pos, curr_pos]}
         self.direction_cache = {}  # {vehicle_id: current_direction}
-        self.threshold = (
-            0.0001  # Threshold to prevent small fluctuations from changing direction
-        )
+        self.threshold = 0.0001  # Threshold to prevent small fluctuations from changing direction
 
-    def detect_direction(
-        self, vehicle_id: str, coord: float, is_latitude: bool = True
-    ) -> str:
+    def detect_direction(self, vehicle_id: str, coord: float, is_latitude: bool = True) -> str:
         """Detect vehicle direction based on coordinate changes.
 
         Args:
@@ -132,7 +130,7 @@ class DirectionDetector:
             return old_direction
 
         new_direction = "eastbound" if coord_diff > threshold else "westbound"
-        
+
         if old_direction != new_direction:
             self.direction_cache[vehicle_id] = new_direction
 
@@ -186,11 +184,7 @@ def fetch_service_alerts():
             alert = entity.alert
             alert_data = {
                 "id": entity.id,
-                "header": (
-                    alert.header_text.translation[0].text
-                    if alert.header_text.translation
-                    else "No header"
-                ),
+                "header": (alert.header_text.translation[0].text if alert.header_text.translation else "No header"),
                 "description": (
                     alert.description_text.translation[0].text
                     if alert.description_text.translation
@@ -198,9 +192,7 @@ def fetch_service_alerts():
                 ),
                 "effect": str(alert.effect) if alert.effect else "UNKNOWN_EFFECT",
                 "cause": str(alert.cause) if alert.cause else "UNKNOWN_CAUSE",
-                "affected_routes": [
-                    ie.route_id for ie in alert.informed_entity if ie.route_id
-                ],
+                "affected_routes": [ie.route_id for ie in alert.informed_entity if ie.route_id],
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
             alerts_data.append(alert_data)
@@ -220,7 +212,7 @@ def fetch_trip_updates():
         feed = gtfs_realtime_pb2.FeedMessage()
         feed.ParseFromString(response.content)
         return feed
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -247,9 +239,7 @@ def get_trip_updates():
                 "schedule": getattr(trip, "schedule_relationship", "SCHEDULED"),
                 "stop_id": stop_time.stop_id if stop_time else "N/A",
                 "arrival": (
-                    format_timestamp(stop_time.arrival.time)
-                    if stop_time and stop_time.HasField("arrival")
-                    else "N/A"
+                    format_timestamp(stop_time.arrival.time) if stop_time and stop_time.HasField("arrival") else "N/A"
                 ),
                 "departure": (
                     format_timestamp(stop_time.departure.time)
@@ -279,18 +269,14 @@ def fetch_vehicle_positions():
                 "route_id": vehicle.trip.route_id,
                 "latitude": vehicle.position.latitude,
                 "longitude": vehicle.position.longitude,
-                "speed": (
-                    vehicle.position.speed
-                    if vehicle.position.HasField("speed")
-                    else "N/A"
-                ),
+                "speed": (vehicle.position.speed if vehicle.position.HasField("speed") else "N/A"),
                 "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             }
             vehicles.append(vehicle_data)
         return vehicles
-    except requests.RequestException as e:
+    except requests.RequestException:
         return []
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -325,11 +311,12 @@ def get_coordinates_list(line_type: str):
 
 
 def get_blue_line_map(direction_id=0):
-    """Return a list of (stop_name, is_train_present) for the Blue Line as a simple line map, using a static list of stations and coordinates."""
+    """
+    Return a list of (stop_name, is_train_present) for the Blue Line as a simple line map,
+        using a static list of stations and coordinates.
+    """
     stop_names = [station["name"] for station in BLUE_LINE_STATIONS]
-    stop_coords = [
-        (station["latitude"], station["longitude"]) for station in BLUE_LINE_STATIONS
-    ]
+    stop_coords = [(station["latitude"], station["longitude"]) for station in BLUE_LINE_STATIONS]
 
     route_id = "901"  # Blue Line
     # Get vehicle positions for Blue Line
@@ -352,19 +339,18 @@ def get_blue_line_map(direction_id=0):
         if closest_idx is not None:
             train_stop_indices.add(closest_idx)
     # Build map: list of (stop_name, is_train_present)
-    line_map = [
-        (name, idx in train_stop_indices) for idx, name in enumerate(stop_names)
-    ]
+    line_map = [(name, idx in train_stop_indices) for idx, name in enumerate(stop_names)]
     return line_map
 
 
 def get_green_line_map(direction_id=0):
-    """Return a list of (stop_name, is_train_present) for the Green Line as a simple line map, using a static list of stations and coordinates."""
+    """
+    Return a list of (stop_name, is_train_present) for the Green Line as a simple line map,
+        using a static list of stations and coordinates.
+    """
     route_id = "902"  # Green Line
     stop_names = [station["name"] for station in GREEN_LINE_STATIONS]
-    stop_coords = [
-        (station["latitude"], station["longitude"]) for station in GREEN_LINE_STATIONS
-    ]
+    stop_coords = [(station["latitude"], station["longitude"]) for station in GREEN_LINE_STATIONS]
 
     vehicles = fetch_vehicle_positions()
     green_line_vehicles = [v for v in vehicles if v["route_id"] == route_id]
